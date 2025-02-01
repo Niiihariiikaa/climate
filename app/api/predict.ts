@@ -20,17 +20,17 @@ export default function handler(req: IncomingMessage, res: ServerResponse) {
         }
 
         // Call the Python script to make a prediction
-        PythonShell.run('predict.py', { args: [JSON.stringify(inputData)] }, (err: PythonShellError | null, result?: string[]) => {
-          if (err) {
-            console.error('Error in prediction:', err);
-            res.statusCode = 500;
-            res.end(JSON.stringify({ message: 'Internal Server Error' }));
-          } else {
+        PythonShell.run('predict.py', { args: [JSON.stringify(inputData)] })
+          .then(result => {
             // Send back the prediction result
             res.statusCode = 200;
             res.end(JSON.stringify({ prediction: result }));
-          }
-        });
+          })
+          .catch((err: PythonShellError) => {
+            console.error('Error in prediction:', err);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ message: 'Internal Server Error' }));
+          });
       } catch (err) {
         console.error('Error parsing request:', err);
         res.statusCode = 400;

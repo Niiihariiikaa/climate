@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
-import { PythonShell } from 'python-shell';
+import { PythonShell, PythonShellError } from 'python-shell';
 
 export default function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method === 'POST') {
@@ -20,17 +20,17 @@ export default function handler(req: IncomingMessage, res: ServerResponse) {
         }
 
         // Call the Python script to make a prediction
-        PythonShell.run('predict.py', { args: [JSON.stringify(inputData)] }, (err, result) => {
-                        if (err) {
-                          console.error('Error in prediction:', err);
-                          res.statusCode = 500;
-                          res.end(JSON.stringify({ message: 'Internal Server Error' }));
-                        } else {
-                          // Send back the prediction result
-                          res.statusCode = 200;
-                          res.end(JSON.stringify({ prediction: result }));
-                        }
-                      });
+        PythonShell.run('predict.py', { args: [JSON.stringify(inputData)] }, (err: PythonShellError | null, result?: string[]) => {
+          if (err) {
+            console.error('Error in prediction:', err);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ message: 'Internal Server Error' }));
+          } else {
+            // Send back the prediction result
+            res.statusCode = 200;
+            res.end(JSON.stringify({ prediction: result }));
+          }
+        });
       } catch (err) {
         console.error('Error parsing request:', err);
         res.statusCode = 400;

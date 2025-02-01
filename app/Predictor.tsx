@@ -59,15 +59,15 @@ export default function PredictForm() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-6">
-      <div className="bg-white shadow-lg rounded-lg p-6 max-w-4xl w-full">
-        <h1 className="text-xl font-semibold text-center text-gray-800 mb-4">
+    <div className="flex items-center justify-center min-h-screen bg-transparent p-6">
+      <div className="bg-black shadow-lg rounded-lg p-6 max-w-4xl w-full">
+        <h1 className="text-xl font-semibold text-center text-white mb-4">
           🌾 Crop Damage Prediction
         </h1>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
           {featureNames.map((name, index) => (
             <div key={index} className="flex flex-col">
-              <label className="text-gray-700 font-medium">{name}</label>
+              <label className="text-white font-medium">{name}</label>
               {index === 5 || index === 7 ? (
                 <select
                   value={features[index]}

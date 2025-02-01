@@ -23,12 +23,6 @@ def get_crop_recommendation(soil_type, rainfall, temperature):
         raise HTTPException(status_code=response.status_code, detail="IBM AI API Error")
     return response.json()["predictions"]
 
-# ✅ 2. AI Weather & Soil Insights using Google Earth Engine API
-def get_weather_data(lat, lon):
-    response = requests.get(f"https://earthengine.googleapis.com/weather?lat={lat}&lon={lon}")
-    if response.status_code != 200:
-        raise HTTPException(status_code=response.status_code, detail="Weather API Error")
-    return response.json()
 
 # ✅ 3. Generate Synthetic Data for Risk Predictions (GANs)
 def generate_synthetic_data(samples=1000):
@@ -66,18 +60,15 @@ def synthetic_data():
 def plant_disease():
     return {"message": "Upload plant image for disease detection"}
 
-
-
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests
 
-# Load the model
+# Load the model for crop damage prediction
 model = joblib.load("crop_damage_model.pkl")
 
 @app.route('/')
 def home():
     return "Flask API is Running!"
-
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -88,6 +79,64 @@ def predict():
         return jsonify({"prediction": prediction.tolist()})
     except Exception as e:
         return jsonify({"error": str(e)})
+
+# Yield Prediction Route
+from flask import Flask, request, jsonify
+import joblib
+import numpy as np
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)  # Allow cross-origin requests
+
+# Load the model for crop damage prediction
+model = joblib.load("crop_damage_model.pkl")
+
+@app.route('/')
+def home():
+    return "Flask API is Running!"
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        data = request.json
+        print("Received data:", data)  # Debugging log
+        
+        # Ensure the incoming data is in the correct format (list of features)
+        features = np.array(data["features"]).reshape(1, -1)  # Convert input to NumPy array
+        print("Features for prediction:", features)  # Debugging log
+        
+        prediction = model.predict(features)
+        print("Prediction result:", prediction)  # Debugging log
+
+        return jsonify({"prediction": prediction.tolist()})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+@app.route("/predict-yield", methods=["POST"])
+def predict_yield():
+    data = request.get_json()
+    print("Received yield data:", data)  # Debugging log
+
+    state = data["state"]
+    district = data["district"]
+    crop = data["crop"]
+    year = data["year"]
+    season = data["season"]
+    area = data["area"]
+    production = data["production"]
+
+    # Prepare input data for the model
+    features = np.array([[state, district, crop, year, season, area, production]])
+    print("Features for yield prediction:", features)  # Debugging log
+
+    try:
+        predicted_yield = model.predict(features)  # Assuming your model can predict yield
+        print("Predicted yield:", predicted_yield)  # Debugging log
+        return jsonify({"predicted_yield": predicted_yield[0]})
+    except Exception as e:
+        return jsonify({"error": f"Error predicting yield: {str(e)}"})
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

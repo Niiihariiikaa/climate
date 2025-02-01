@@ -16,17 +16,38 @@ import {
   Cell,
 } from "recharts";
 
+interface MarketData {
+  commodity: string;
+  state: string;
+  modal_price: number; // Updated to number
+  arrival_date: string;
+}
+
+interface ChartData {
+  commodity: string;
+  price: number;
+}
+
+interface PriceTrendData {
+  date: string;
+  price: number;
+}
+
+interface CommodityDistribution {
+  name: string;
+  value: number;
+}
+
 const MarketTrends = () => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCommodity, setSelectedCommodity] = useState("");
   const [selectedState, setSelectedState] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [arrivalDate, setArrivalDate] = useState("");
 
-  // Fetch market data from the API
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -39,27 +60,27 @@ const MarketTrends = () => {
             limit: 100, // Fetch latest 100 records
           },
         });
-
+  
         if (response.status === 200) {
-          const records = response.data.records;
-
+          const records = response.data.records as MarketData[];
+  
           // Convert modal_price to numeric
           const processedData = records.map((record) => ({
             ...record,
-            modal_price: parseFloat(record.modal_price),
+            modal_price: parseFloat(record.modal_price as unknown as string), // Ensure modal_price is treated as a string before parsing
           }));
-
+  
           setData(processedData);
         } else {
           setError("Failed to fetch data");
         }
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, []);
 
@@ -67,11 +88,16 @@ const MarketTrends = () => {
   const filteredData = data.filter((item) => {
     const matchesCommodity = selectedCommodity ? item.commodity === selectedCommodity : true;
     const matchesState = selectedState ? item.state === selectedState : true;
+  
+    const minPriceNum = minPrice ? parseFloat(minPrice) : null;
+    const maxPriceNum = maxPrice ? parseFloat(maxPrice) : null;
+  
     const matchesPrice =
-      (minPrice ? item.modal_price >= parseFloat(minPrice) : true) &&
-      (maxPrice ? item.modal_price <= parseFloat(maxPrice) : true);
+      (minPriceNum !== null ? item.modal_price >= minPriceNum : true) &&
+      (maxPriceNum !== null ? item.modal_price <= maxPriceNum : true);
+  
     const matchesDate = arrivalDate ? item.arrival_date.includes(arrivalDate) : true;
-
+  
     return matchesCommodity && matchesState && matchesPrice && matchesDate;
   });
 
@@ -81,26 +107,26 @@ const MarketTrends = () => {
   const arrivalDates = [...new Set(data.map((item) => item.arrival_date.split("T")[0]))]; // Extract date part only
 
   // Group data by commodity and get the latest price for each
-  const latestPrices = filteredData.reduce((acc, item) => {
+  const latestPrices = filteredData.reduce<Record<string, MarketData>>((acc, item) => {
     if (!acc[item.commodity] || new Date(item.arrival_date) > new Date(acc[item.commodity].arrival_date)) {
       acc[item.commodity] = item;
     }
     return acc;
   }, {});
 
-  const chartData = Object.values(latestPrices).map((item) => ({
+  const chartData: ChartData[] = Object.values(latestPrices).map((item) => ({
     commodity: item.commodity,
-    price: item.modal_price,
+    price: item.modal_price, // No need to parse again
   }));
 
-  const priceTrendData = filteredData.map((item) => ({
+  const priceTrendData: PriceTrendData[] = filteredData.map((item) => ({
     date: item.arrival_date.split("T")[0], // Using the date part only
-    price: item.modal_price,
+    price: item.modal_price, // No need to parse again
   }));
 
-  const commodityDistribution = Object.values(latestPrices).map((item) => ({
+  const commodityDistribution: CommodityDistribution[] = Object.values(latestPrices).map((item) => ({
     name: item.commodity,
-    value: item.modal_price,
+    value: item.modal_price, // No need to parse again
   }));
 
   if (loading) {

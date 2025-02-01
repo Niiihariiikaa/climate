@@ -90,7 +90,7 @@ export default function Home() {
           fourthColor="0, 51, 25"
           pointerColor="0, 102, 51"
           size="100%"
-          blendingValue={40}
+          blendingValue="40"
         />
       </div>
 

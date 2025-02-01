@@ -3,7 +3,7 @@ import { PythonShell } from 'python-shell';
 
 export default function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method === 'POST') {
-    let body: any = '';
+    let body: string = '';  // Define body as a string type
 
     req.on('data', (chunk) => {
       body += chunk;
@@ -13,23 +13,32 @@ export default function handler(req: IncomingMessage, res: ServerResponse) {
       try {
         // Parse the input data
         const inputData = JSON.parse(body);
-        
+
+        // Ensure the inputData has the expected structure
+        if (!inputData) {
+          throw new Error('Invalid data structure');
+        }
+
         // Call the Python script to make a prediction
         PythonShell.run('predict.py', { args: [JSON.stringify(inputData)] }, (err, result) => {
-          if (err) {
-            console.error('Error in prediction:', err);
-            res.status(500).json({ message: 'Internal Server Error' });
-          } else {
-            // Send back the prediction result
-            res.status(200).json({ prediction: result });
-          }
-        });
+                        if (err) {
+                          console.error('Error in prediction:', err);
+                          res.statusCode = 500;
+                          res.end(JSON.stringify({ message: 'Internal Server Error' }));
+                        } else {
+                          // Send back the prediction result
+                          res.statusCode = 200;
+                          res.end(JSON.stringify({ prediction: result }));
+                        }
+                      });
       } catch (err) {
         console.error('Error parsing request:', err);
-        res.status(400).json({ message: 'Bad Request' });
+        res.statusCode = 400;
+        res.end(JSON.stringify({ message: 'Bad Request' }));
       }
     });
   } else {
-    res.status(405).json({ message: 'Method Not Allowed' });
+    res.statusCode = 405;
+    res.end(JSON.stringify({ message: 'Method Not Allowed' }));
   }
 }

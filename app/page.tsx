@@ -1,6 +1,6 @@
 "use client"
-import Image from 'next/image';
-import { motion, AnimatePresence } from "framer-motion";
+
+import { motion, } from "framer-motion";
 import { ThreeDCardDemo } from "./ThreeDCardDemo";
 import { HoverEffect } from "@/components/ui/hover-effect";
 import PredictForm from "./Predictor";

@@ -8,6 +8,17 @@ import numpy as np
 from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Flatten
+from flask import Flask
+from serverless_wsgi import handle_request
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Flask API is Running!"
+
+def handler(event, context):
+    return handle_request(app, event, context)
 
 app = FastAPI()
 
